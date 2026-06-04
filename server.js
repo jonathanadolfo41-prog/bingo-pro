@@ -6,7 +6,15 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// 🔥 servir frontend
 app.use(express.static("public"));
+
+// 🌐 ruta principal (IMPORTANTE)
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/public/index.html");
+});
+
+// ---------------- GAME LOGIC ----------------
 
 let numbers = Array.from({ length: 75 }, (_, i) => i + 1);
 let drawn = [];
@@ -16,7 +24,7 @@ let gameLocked = false;
 let usedCards = new Set();
 let cardCounter = 1;
 
-// 🎫 CARTÓN 4x4 ÚNICO
+// 🎫 generar cartón único 4x4
 function generateCard() {
     let card;
     let key;
@@ -45,7 +53,7 @@ function generateCard() {
     };
 }
 
-// 🏆 VERIFICAR BINGO
+// 🏆 verificar bingo
 function checkBingo(card, drawn) {
     let flat = card.flat();
     let marked = flat.map(n => drawn.includes(n));
@@ -66,6 +74,8 @@ function checkBingo(card, drawn) {
 
     return false;
 }
+
+// ---------------- SOCKETS ----------------
 
 io.on("connection", (socket) => {
 
@@ -91,7 +101,7 @@ io.on("connection", (socket) => {
         io.emit("currentNumber", num);
     });
 
-    // 🏆 declarar bingo
+    // 🏆 check bingo
     socket.on("checkBingo", (data) => {
         if (gameLocked) return;
 
@@ -108,7 +118,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 🔄 reiniciar juego
+    // 🔄 reset juego
     socket.on("reset", () => {
         numbers = Array.from({ length: 75 }, (_, i) => i + 1);
         drawn = [];
@@ -126,11 +136,10 @@ io.on("connection", (socket) => {
     });
 });
 
+// ---------------- START SERVER ----------------
+
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-    console.log("Servidor listo");
-});
-app.get("/", (req, res) => {
-  res.send("Servidor funcionando 🚀");
+    console.log("Servidor listo en puerto " + PORT);
 });
